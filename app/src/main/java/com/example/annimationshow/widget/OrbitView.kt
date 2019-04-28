@@ -70,6 +70,8 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
     //坐标点集合
     private lateinit var points: List<PointF>
 
+    private var orbitPath = Path()
+
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, att: AttributeSet?, defAttr: Int) : this(context, att)
@@ -80,8 +82,8 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        mViewWidth = w.toFloat() - 2 * viewPadding
-        mViewHeight = h.toFloat() - 2 * viewPadding
+        mViewWidth = w.toFloat() - viewPadding
+        mViewHeight = h.toFloat() - viewPadding
 
         calculateStartAndEndPoint()
     }
@@ -102,14 +104,36 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
         }
 
         // 计算 网格 尺寸
-        currentGridWH = Math.min(
-            (mViewWidth - fontPadding) / 10,
-            (mViewHeight - fontPadding) / (maxPoint.y - minPoint.y)
-        )
+//        currentGridWH = Math.min(
+//            (mViewWidth - fontPadding) / currentYCellNum,
+//            (mViewHeight - fontPadding) / (maxPoint.y - minPoint.y)
+//        )
 
         calculateStartAndEndPoint()
 
+        buildPath()
+
         invalidate()
+    }
+
+    /**
+     * 构建路径
+     */
+    private fun buildPath() {
+        orbitPaint.reset()
+        if (points.isNotEmpty()) {
+            var width = currentYCellNum * currentGridWH
+            for (i in 0 until points.size step 1) {
+                var currentPointF = points[i]
+                orbitPath.moveTo(circlePoint.x,circlePoint.y)
+                orbitPath.lineTo(
+                    currentPointF.x * width,
+                    (circlePoint.y
+                            - currentPointF.y * defaultRate * currentGridWH).toFloat()
+                )
+            }
+        }
+
     }
 
     /**
@@ -118,8 +142,8 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
     private fun calculateStartAndEndPoint() {
 
         // 计算 y轴上半轴 以及 y轴下半轴的 网格 数目
-        var yPlusCount = Math.abs(Math.ceil(maxPoint.y.toDouble()))
-        var yMinusCount = Math.abs(Math.floor(minPoint.y.toDouble()))
+        val yPlusCount = Math.abs(Math.ceil(maxPoint.y.toDouble())) * defaultRate
+        val yMinusCount = Math.abs(Math.floor(minPoint.y.toDouble())) * defaultRate
 
         currentYCellNum = (yPlusCount + yMinusCount).toInt()
 
@@ -142,7 +166,6 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
             it.color = resources.getColor(android.R.color.black)
             it.textSize = fontSize
             it.style = Paint.Style.FILL_AND_STROKE
-            it.textAlign = Paint.Align.CENTER
         }
 
         gridPaint.let {
@@ -153,9 +176,7 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
         }
 
         orbitPaint.let {
-            it.isAntiAlias = true
             it.color = resources.getColor(android.R.color.holo_red_light)
-            it.textSize = fontSize
             it.style = Paint.Style.FILL_AND_STROKE
         }
     }
@@ -175,15 +196,15 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
             )
 
             //横向网格线
-            for (i in minPoint.y.toInt() * 10..
-                    maxPoint.y.toInt() * 10 step 1) {
+            for (i in minPoint.y.toInt() * currentYCellNum..
+                    maxPoint.y.toInt() * currentYCellNum step 1) {
                 it.drawLine(
                     circlePoint.x, circlePoint.y - i * currentGridWH,
                     endPoint.x, circlePoint.y - i * currentGridWH, gridPaint
                 )
                 if (i != 0) {
                     it.drawText(
-                        "${i.toFloat() / 10}", 0f,
+                        "${i.toFloat() / currentYCellNum}", 0f,
                         circlePoint.y - i * currentGridWH, xyPaint
                     )
                 } else {
@@ -195,17 +216,19 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
             }
 
             //竖向网格线
-            for (i in 1..10 step 1) {
+            for (i in 1..currentYCellNum step 1) {
                 it.drawLine(
                     circlePoint.x + currentGridWH * i, circlePoint.y,
                     circlePoint.x + currentGridWH * i, 0f, gridPaint
                 )
                 it.drawText(
-                    "${i.toFloat() / 10}", circlePoint.x + currentGridWH * i,
+                    "${i.toFloat() / currentYCellNum}", circlePoint.x + currentGridWH * i,
                     circlePoint.y + fontPadding, xyPaint
                 )
-
             }
+
+            //绘制曲线
+            it.drawPath(orbitPath, orbitPaint)
         }
     }
 }
