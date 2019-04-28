@@ -120,17 +120,26 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
      * 构建路径
      */
     private fun buildPath() {
-        orbitPaint.reset()
+        if (!orbitPath.isEmpty){
+            orbitPath.reset()
+        }
         if (points.isNotEmpty()) {
             var width = currentYCellNum * currentGridWH
             for (i in 0 until points.size step 1) {
                 var currentPointF = points[i]
-                orbitPath.moveTo(circlePoint.x,circlePoint.y)
-                orbitPath.lineTo(
-                    currentPointF.x * width,
-                    (circlePoint.y
-                            - currentPointF.y * defaultRate * currentGridWH).toFloat()
-                )
+                when (i) {
+                    0 -> orbitPath.moveTo(
+                        currentPointF.x * width+fontPadding,
+                        (circlePoint.y
+                                - currentPointF.y * defaultRate * currentGridWH).toFloat()
+                    )
+                    else -> orbitPath.lineTo(
+                        currentPointF.x * width+fontPadding,
+                        (circlePoint.y
+                                - currentPointF.y * defaultRate * currentGridWH).toFloat()
+                    )
+                }
+
             }
         }
 
@@ -177,7 +186,8 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
 
         orbitPaint.let {
             it.color = resources.getColor(android.R.color.holo_red_light)
-            it.style = Paint.Style.FILL_AND_STROKE
+            it.style = Paint.Style.STROKE
+            it.strokeWidth = dp2px(context,1)
         }
     }
 
