@@ -3,10 +3,8 @@ package com.example.annimationshow.widget
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import com.example.annimationshow.util.dp2px
-import java.lang.Exception
 
 
 class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
@@ -37,6 +35,15 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
 
     //默认最低点
     private val defaultMinPoint = PointF(0f, 0f)
+
+    //默认大圆点坐标
+    private val defaultCirclePosition = PointF(0f, 0f)
+
+    //默认圆点半径
+    private val circleRadius = 8f
+
+    //当前圆点坐标
+    private var currentCirclePosition: PointF = defaultCirclePosition
 
     //默认 y 轴的网格数目
     private val defaultYCellNum = 10
@@ -90,10 +97,14 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
     //网格线画笔
     private var gridPaint: Paint = Paint()
 
+    //圆点画笔
+    private var circlePaint:Paint = Paint()
+
     //坐标点集合
     private lateinit var points: MutableList<PointF>
 
     private var orbitPath = Path()
+
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, att: AttributeSet?, defAttr: Int) : this(context, att)
@@ -145,7 +156,7 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
     private fun buildPath() {
         orbitPath.reset()
         if (points.isNotEmpty()) {
-            orbitPath.moveTo(circlePoint.x,circlePoint.y)
+            orbitPath.moveTo(circlePoint.x, circlePoint.y)
             for (i in 0 until points.size step 1) {
                 val currentPoint = points[i]
                 val currentRate = currentPoint.y / (maxPoint.y - minPoint.y)
@@ -180,6 +191,8 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
         //计算圆点坐标
         circlePoint.x = fontPadding
         circlePoint.y = mViewHeight - yMinusCount * currentGridWH
+
+        currentCirclePosition = circlePoint
 
         /**
          *  计算坐标轴上的起点与终点 坐标
@@ -231,6 +244,11 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
             it.color = resources.getColor(android.R.color.holo_red_light)
             it.style = Paint.Style.STROKE
             it.strokeWidth = dp2px(context, 1)
+        }
+
+        circlePaint.let{
+            it.isAntiAlias = true
+            it.color = resources.getColor(android.R.color.holo_red_light)
         }
     }
 
@@ -284,6 +302,23 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
             }
             //绘制曲线
             it.drawPath(orbitPath, orbitPaint)
+
+            it.drawCircle(currentCirclePosition.x,currentCirclePosition.y,
+                circleRadius,circlePaint)
         }
+    }
+
+    /**
+     * 设置大红点的坐标
+     */
+    fun setBigRedCirclePosition(pointF: PointF) {
+        val xLength: Float = pointF.x * currentGridWH * defaultXCellNum
+        val yLength = (pointF.y / (maxPoint.y - minPoint.y)) *
+                currentYCellNum * currentGridWH
+        currentCirclePosition = PointF(circlePoint.x + xLength,
+            circlePoint.y - yLength)
+
+        invalidate()
+
     }
 }
