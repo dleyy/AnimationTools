@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import com.example.annimationshow.util.dp2px
-import kotlin.math.max
+import java.lang.Exception
 
 
 class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
@@ -91,10 +91,9 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
     private var gridPaint: Paint = Paint()
 
     //坐标点集合
-    private lateinit var points: List<PointF>
+    private lateinit var points: MutableList<PointF>
 
     private var orbitPath = Path()
-
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, att: AttributeSet?, defAttr: Int) : this(context, att)
@@ -114,9 +113,10 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
     /**
      * 设置值和点对应关系
      */
-    open fun setPointFs(list: List<PointF>) {
-        maxPoint.y = 0f
-        this.points = list
+    fun setPointFs(list: MutableList<PointF>) {
+
+        maxPoint = defaultMaxPoint
+        minPoint = defaultMinPoint
 
         //计算最高点与最低点
         for (point in list) {
@@ -126,10 +126,15 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
                 minPoint = point
             }
         }
+        this.points = list
 
         calculateStartAndEndPoint()
 
-        buildPath()
+        /**
+         * 如果buildPath 放这，去掉canvas 里面的话， 就不会显示
+         * emmm,暂时不知道为什么. 2019/5/31
+         */
+        //buildPath()
 
         invalidate()
     }
@@ -138,10 +143,9 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
      * 构建路径
      */
     private fun buildPath() {
-        if (!orbitPath.isEmpty) {
-            orbitPath.reset()
-        }
+        orbitPath.reset()
         if (points.isNotEmpty()) {
+            orbitPath.moveTo(circlePoint.x,circlePoint.y)
             for (i in 0 until points.size step 1) {
                 val currentPoint = points[i]
                 val currentRate = currentPoint.y / (maxPoint.y - minPoint.y)
@@ -158,10 +162,8 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
                         circlePoint.y - toCircleLY
                     )
                 }
-
             }
         }
-
     }
 
     /**
@@ -173,6 +175,7 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
         yMinusCount = (Math.abs(Math.floor((minPoint.y * defaultRate).toDouble()))).toInt()
 
         currentYCellNum = yPlusCount + yMinusCount
+        currentGridWH = mViewHeight / currentYCellNum
 
         //计算圆点坐标
         circlePoint.x = fontPadding
@@ -224,6 +227,7 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
         }
 
         orbitPaint.let {
+            it.isAntiAlias = true
             it.color = resources.getColor(android.R.color.holo_red_light)
             it.style = Paint.Style.STROKE
             it.strokeWidth = dp2px(context, 1)
@@ -231,7 +235,9 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
     }
 
     override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
+
+        buildPath()
+
         canvas?.let {
             //y轴
             it.drawLine(
@@ -276,7 +282,6 @@ class OrbitView(context: Context, att: AttributeSet?) : View(context, att) {
                     (circlePoint.y + 0.5f * fontPadding), xyPaint
                 )
             }
-
             //绘制曲线
             it.drawPath(orbitPath, orbitPaint)
         }

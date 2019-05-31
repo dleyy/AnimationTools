@@ -1,11 +1,9 @@
 package com.example.annimationshow
 
-import android.animation.AnimatorListenerAdapter
 import android.animation.TimeInterpolator
 import android.graphics.PointF
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.example.annimationshow.bean.DataBean
 import kotlinx.android.synthetic.main.activity_main.*
@@ -17,25 +15,27 @@ import android.view.animation.BounceInterpolator
 import android.view.animation.AnticipateOvershootInterpolator
 import android.view.animation.AnticipateInterpolator
 import android.view.animation.AccelerateInterpolator
-import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.annimationshow.adapter.InterpolatorAdapter
-import java.text.FieldPosition
 
 
 class MainActivity : AppCompatActivity() {
 
+    //将数据分为1000份
+    private val perPoint = 1000
+
     //列表数据源
-    lateinit var interpolatorLists:MutableList<DataBean>
+    private lateinit var interpolatorLists: MutableList<DataBean>
     lateinit var adapter: InterpolatorAdapter
 
-    lateinit var currentInterpolator:TimeInterpolator
-
-
+    lateinit var currentInterpolator: TimeInterpolator
+    lateinit var pointFList: MutableList<PointF>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        pointFList = ArrayList()
 
         createAdapterData()
 
@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
     private fun createAdapterData() {
         interpolatorLists = mutableListOf()
         interpolatorLists.let {
-            it.add(DataBean(true,"SpringInterpolator",AccelerateDecelerateInterpolator()))
+            it.add(DataBean(true, "AccelerateDecelerateInterpolator", AccelerateDecelerateInterpolator()))
             it.add(DataBean(false, "AccelerateInterpolator", AccelerateInterpolator()))
             it.add(DataBean(false, "AnticipateInterpolator", AnticipateInterpolator()))
             it.add(DataBean(false, "AnticipateOvershootInterpolator", AnticipateOvershootInterpolator()))
@@ -66,12 +66,26 @@ class MainActivity : AppCompatActivity() {
             it.add(DataBean(false, "OvershootInterpolator", OvershootInterpolator()))
         }
         currentInterpolator = interpolatorLists[0].polator
-
+        buildPointF()
     }
 
-    private fun onInterpolatorChecked(position: Int){
+    private fun onInterpolatorChecked(position: Int) {
         currentInterpolator = interpolatorLists[position].polator
+        buildPointF()
     }
 
-    private fun
+    /**
+     * 构造数据点
+     */
+    private fun buildPointF() {
+        pointFList.clear()
+        for (i in 1..perPoint step 1) {
+            var x = i.toFloat() / perPoint
+            var y = currentInterpolator.getInterpolation(x)
+            var pointF = PointF(x, y)
+            pointFList.add(pointF)
+        }
+        orbit_view.setPointFs(pointFList)
+    }
+
 }

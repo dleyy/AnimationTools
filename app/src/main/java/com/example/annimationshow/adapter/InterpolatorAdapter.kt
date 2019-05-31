@@ -5,16 +5,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.CompoundButton
+import android.widget.RadioGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.annimationshow.R
 import com.example.annimationshow.bean.DataBean
+import java.util.*
 
 class InterpolatorAdapter(var data: MutableList<DataBean>) :
     RecyclerView.Adapter<InterpolatorAdapter.InterpolatorHolder>() {
 
     var currentSelected = 0
 
-    lateinit var checkedFunc:(position:Int)->Unit
+    lateinit var checkedFunc: (position: Int) -> Unit
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): InterpolatorHolder {
         val view = LayoutInflater.from(parent.context).inflate(
@@ -33,14 +36,13 @@ class InterpolatorAdapter(var data: MutableList<DataBean>) :
             it.text = (data[position].name)
             it.isChecked = data[position].isShown
         }
+
         holder.checkBox.setOnClickListener {
-            if (position != currentSelected) {
-                data[currentSelected].isShown = false
-                data[position].isShown = true
-                currentSelected = position
-                notifyDataSetChanged()
-                checkedFunc(position)
-            }
+            data[currentSelected].isShown = false
+            data[position].isShown = true
+            currentSelected = position
+            checkedFunc(position)
+            notifyDataSetChanged()
         }
     }
 
