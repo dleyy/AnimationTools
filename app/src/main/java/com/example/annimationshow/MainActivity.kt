@@ -1,8 +1,6 @@
 package com.example.annimationshow
 
-import android.animation.ObjectAnimator
-import android.animation.TimeInterpolator
-import android.animation.ValueAnimator
+import android.animation.*
 import android.graphics.PointF
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,7 +9,6 @@ import com.example.annimationshow.bean.DataBean
 import kotlinx.android.synthetic.main.activity_main.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.annimationshow.adapter.InterpolatorAdapter
-import android.animation.AnimatorSet
 import android.util.Log
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnEnd
@@ -19,6 +16,9 @@ import androidx.core.animation.doOnStart
 import com.example.annimationshow.util.dp2px
 import com.example.annimationshow.util.getScreenHeight
 import com.example.annimationshow.util.getStatusHeight
+import android.view.animation.Animation
+
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -64,7 +64,11 @@ class MainActivity : AppCompatActivity() {
         viewAnimation.interpolator = currentInterpolator
         floatAnimation.interpolator = currentInterpolator
 
-        animatorSet.duration = 2000L
+        animatorSet.duration = if (et_duration.text.isEmpty()) {
+            2000L
+        } else {
+            et_duration.text.toString().toLong()
+        }
         animatorSet.start()
     }
 
@@ -89,16 +93,14 @@ class MainActivity : AppCompatActivity() {
             val pointF = PointF(x, y)
             orbit_view.setBigRedCirclePosition(pointF)
         }
-
-        viewAnimation.addListener {
-            it.doOnStart {
-                animationIsRunning = true
-            }
-            it.doOnEnd {
-                animationIsRunning = false
-            }
+        floatAnimation.doOnStart {
+            animationIsRunning = true
+            tv_state_info.text = "running"
         }
-
+        floatAnimation.doOnEnd {
+            animationIsRunning = false
+            tv_state_info.text = "ready"
+        }
     }
 
     /**
